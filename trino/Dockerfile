@@ -1,20 +1,37 @@
-# Start with the official Trino image
+# First stage: build pspg from source using Alpine with static linking
+FROM alpine:latest AS pspg-builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    git \
+    gcc \
+    make \
+    musl-dev \
+    ncurses-static \
+    ncurses-dev \
+    readline-static \
+    readline-dev
+
+# Clone and build pspg with static linking
+RUN mkdir -p /tmp/build && \
+    cd /tmp/build && \
+    git clone https://github.com/okbob/pspg.git && \
+    cd pspg && \
+    LDFLAGS="-static" ./configure && \
+    make && \
+    make install
+
+# Second stage: use the official Trino image and copy pspg binary
 FROM trinodb/trino:latest
 
-# Switch to root to install packages
 USER root
 
-# Install pspg and any dependencies
-RUN apt-get update && \
-    apt-get install -y pspg less && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Copy statically linked pspg binary from the builder stage
+COPY --from=pspg-builder /usr/local/bin/pspg /usr/local/bin/pspg
 
-# Set pspg as the default pager for Trino CLI
+# Set pspg as the default pager specifically for Trino CLI
+ENV TRINO_PAGER="pspg --no-mouse"
 ENV LESS="-iMFXSx4R"
-ENV PAGER="pspg --no-mouse"
 
 # Switch back to the trino user
-USER trino
-
-# The default command will be inherited from the base image
+USER trino:trino

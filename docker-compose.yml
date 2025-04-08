@@ -18,12 +18,27 @@ services:
       - $PWD/storage/superset_home:/app/superset_home
     environment:
       - DATABASE_DB=superset
-      - DATABASE_HOST=db
+      - DATABASE_HOST=superset_db
       - DATABASE_PASSWORD=superset
       - DATABASE_USER=superset
       - DATABASE_PORT=5432
     ports:
       - '8088:8088'
+    entrypoint: []
+    command: >
+      bash -c "
+        if [ ! -f /app/superset_home/.setup_complete ]; then
+          echo 'Running first-time setup...'
+          superset db upgrade && \
+          superset init && \
+          superset fab create-admin --username admin --firstname Superset --lastname Admin --email admin@localhost --password secret && \
+          touch /app/superset_home/.setup_complete && \
+          echo 'Setup complete!'
+        else
+          echo 'Setup already completed, skipping...'
+        fi &&
+        exec /usr/bin/run-server.sh
+      "
 
   superset_db:
     init: true

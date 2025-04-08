@@ -1,31 +1,124 @@
-# simple-superset-compose
+= trino-metabase-simple-superset
+@rmoff / 2025-04-08
 
-This is a minimal [Superset](https://superset.apache.org/) + Docker Compose set up. It's intended to simplify the process of trying out Superset.
+_Credit to https://github.com/elijahfhopp[Elijah Hopp] on https://github.com/elijahfhopp/simple-superset-compose[whose project] this is based_.
 
-:warning: **simple-superset-compose is not intended for production use. There are unsafe settings enabled in `superset/superset_config.py`.**
+This is a minimal setup to run Trino as a query engine with the option for query building and visualisation with either [Superset](https://superset.apache.org/) or [Metabase](https://www.metabase.com/).
+It includes installation of Trino support for Supersert and Metabase, neither of which ship with support for it by default.
 
-## Usage
+:warning: This is 💯 intended for local sandbox experimentation. Do not even think about using it as the basis for production deployment :)**
 
-1. Determine if you need to make any changes to `superset_config.py` (more info [here](https://superset.apache.org/docs/installation/configuring-superset)). If you ever make any changes to `superset_config.py`, make sure to rebuild the docker images (`docker compose build`).
+== Pre-config
 
-2. Run `docker compose up`. If it is logging errors about creating a database, the permissions of the new `superset_home` folder may be too restrictive (i.e. `chmod 777 superset_home`).
+=== Trino
 
-3. Run the `setup.sh` file, which initializes an account named `admin` with the password `secret`.
+1. Add any catalogs that you want to in the `trino/catalog` directory.
+A catalog definition is already provided for Apache Iceberg/TableFlow, and the in-memory connector.
+If you are using the Tableflow connector make sure to update the `tableflow.properties` file with your TableFlow API key and secret.
 
-4. Visit [http://localhost:8080](http://localhost:8080).
+=== Superset
 
-5. [Connect the running PostgreSQL to Superset](https://superset.apache.org/docs/databases/db-connection-ui). The settings will be:
-   
-| HOST | PORT | DATABASE NAME | USERNAME | PASSWORD |
-|---|---|---|---|---|
-| database| 5432 | superset | superset | secretsecret |
+1. Update the `superset_config.py` file with any configuration changes that you need.
+.. If you want to use any map-based visualisations, you will need to set the `MAPBOX_API_KEY` variable.
+Get your API key from https://www.mapbox.com/.
+You do need to provide a credit card 😢 but I found that the free tier is more than enough for simple use.
+YMMV of course—don't take my word for it!
 
-6. Insert data into the database via the exposed port (`5000` by default), or [via the Superset UI](https://superset.apache.org/docs/creating-charts-dashboards/exploring-data/).
+== Usage
 
-7. Try Superset.
+Run `docker compose up`.
 
-8. Profit!
+=== Trino
 
-## Notes
+There is a long list of Trino clients https://trino.io/ecosystem/client-application#other-client-applications[here].
 
-Apache Superset comes with a default Docker Compose setup, but it is not very condusive to trying out the basic functionality of Superset in your local env. This little compose file is the (impercise, quick-n-dirty) product of me wanting to trying out Superset, but shying away from the intensive setup process. It's simple nature lends itself well to use as a little offline anylitics app/SQL exploration lab with fancy graphs/a workspace to safely try out Superset development. Enjoy!
+Trino includes a built-in CLI.
+To launch it, run:
+
+[source,bash]
+----
+docker exec -it trino trino
+----
+
+This gives you a `trino>` prompt, from which you can run Trino SQL.
+
+TIP: You can view the Trino UI for monitoring metrics at http://localhost:8080/ui/
+
+=== Superset
+
+Login to Superset at http://localhost:8088/login/ as `admin@localhost` / `secret`.
+
+Create a connection to Trino:
+
+. Go to http://localhost:8088/databaseview/list/[the Databases list] (from the Settings menu)
+. Click **+ Database** button
+. Under **Supported databases** select `Trino`
+. Set the **SQLAlchemy URI** to `trino://trino@trino:8080/in-mem` (or use `/tableflow` if you've configured the Tableflow catalog)
++
+That's a lot of `trino`s! This is what they mean:
+
+.. `trino://` is the connection string prefix
+.. `trino@` is the default username, with no password
+.. `trino:8080` is the Docker container hostname (`trino`) and port on which Trino is running
+. Click **Connect**
+
+==== Exploring Superset
+
+Under the **SQL** menu at the top click on **SQL Lab**. 
+In the SQL query pane enter:
+
+[source,sql]
+----
+SELECT 
+    n AS id,
+    'Item_' || CAST(n AS VARCHAR) AS name,
+    ROUND(RAND() * 1000, 2) AS value,
+    CASE MOD(n, 5) 
+        WHEN 0 THEN 'Category A'
+        WHEN 1 THEN 'Category B'
+        WHEN 2 THEN 'Category C'
+        WHEN 3 THEN 'Category D'
+        WHEN 4 THEN 'Category E'
+    END AS category,
+    DATE_ADD('day', MOD(n, 365), DATE '2024-01-01') AS created_date
+FROM UNNEST(sequence(1, 100)) AS t(n);
+----
+
+Click on **Run**.
+You've now got some data to play around with and explore :)
+
+=== Metabase
+
+Metabase takes a few minutes to initalise.
+Tail the container log:
+
+[source,bash]
+----
+docker compose logs -f metabase-run-setup
+----
+
+Once it's ready you'll see: 
+
+[source,bash]
+----
+[…]
+metabase-run-setup  |
+metabase-run-setup  |   ╔╦╗╔═╗╔╦╗╔═╗╔╗ ╔═╗╔═╗╔═╗  ╦═╗╔═╗╔═╗╔╦╗╦ ╦┬
+metabase-run-setup  |   ║║║║╣  ║ ╠═╣╠╩╗╠═╣╚═╗║╣   ╠╦╝║╣ ╠═╣ ║║╚╦╝│
+metabase-run-setup  |   ╩ ╩╚═╝ ╩ ╩ ╩╚═╝╩ ╩╚═╝╚═╝  ╩╚═╚═╝╩ ╩═╩╝ ╩ o
+metabase-run-setup  |
+[…]
+----
+
+Login to Metabase at http://localhost:3000 as `admin@example.com` / `ArthurDent42`.
+
+Click on **Add database** on the left panel.
+
+Create a connection: 
+
+* Database type: `Starburst`
+* Display name: _Whatever you want_
+* Host: `trino`
+* Port: `8080`
+* Catalog: `in-mem` (or `tableflow` if you've configured it)
+* Username: `trino`

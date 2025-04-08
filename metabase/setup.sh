@@ -11,8 +11,17 @@ until http --check-status --ignore-stdin --timeout=5 HEAD http://metabase:3000 >
     sleep 5
 done
 
-# Get setup token
-SETUP_TOKEN=$(http --ignore-stdin --timeout=5 GET http://metabase:3000/api/session/properties | jq -r '.["setup-token"]')
+# Wait for the API to be fully initialized
+SETUP_TOKEN=""
+while [ -z "$SETUP_TOKEN" ] || [ "$SETUP_TOKEN" = "null" ]; do
+    printf '.'
+    sleep 5
+    # Try to get the setup token, but handle errors gracefully
+    RESPONSE=$(http --ignore-stdin --timeout=5 GET http://metabase:3000/api/session/properties 2>/dev/null || echo '{}')
+    SETUP_TOKEN=$(echo $RESPONSE | jq -r '.["setup-token"]' 2>/dev/null || echo "")
+done
+
+echo 'Setup token obtained: '$SETUP_TOKEN
 
 # Configure Metabase
 http --ignore-stdin POST http://metabase:3000/api/setup \
