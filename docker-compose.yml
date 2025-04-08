@@ -1,6 +1,13 @@
-version: '3'
-
 services:
+  trino:
+    container_name: trino
+    build:
+      context: ./trino
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - $PWD/trino/catalog:/etc/trino/catalog
   superset:
     init: true
     build:
@@ -8,7 +15,7 @@ services:
       dockerfile: Dockerfile
     container_name: superset
     volumes:
-      - ./superset_home:/app/superset_home
+      - $PWD/storage/superset_home:/app/superset_home
     environment:
       - DATABASE_DB=superset
       - DATABASE_HOST=db
@@ -16,17 +23,34 @@ services:
       - DATABASE_USER=superset
       - DATABASE_PORT=5432
     ports:
-      - '8080:8088'
-  
-  database:
+      - '8088:8088'
+
+  superset_db:
     init: true
     image: postgres:alpine
     container_name: superset_db
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - $PWD/storage/superset_db:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=superset
       - POSTGRES_USER=superset
       - POSTGRES_PASSWORD=secretsecret
     ports:
-      - '5000:5432'
+      - '5432:5432'
+
+  metabase:
+    container_name: metabase
+    build:
+      context: ./metabase
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+
+  metabase-run-setup:
+    image: alpine:latest
+    container_name: metabase-run-setup
+    depends_on:
+      - metabase
+    volumes:
+      - ./metabase/setup.sh:/setup.sh
+    command: sh /setup.sh
