@@ -6,8 +6,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    # Uncomment this if you want to use 'Bring your own Storage' with the Tableflow connector:
+    # environment:
+    #   - AWS_PROFILE=default
+    #   - AWS_REGION=us-east-1
+    #   - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-$(aws configure get aws_access_key_id)}
+    #   - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-$(aws configure get aws_secret_access_key)}
     volumes:
       - $PWD/trino/catalog:/etc/trino/catalog
+
   superset:
     init: true
     build:
