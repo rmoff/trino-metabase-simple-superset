@@ -3,8 +3,9 @@
 
 _Credit to https://github.com/elijahfhopp[Elijah Hopp] on https://github.com/elijahfhopp/simple-superset-compose[whose project] this is based_.
 
-This is a minimal setup to run Trino as a query engine with the option for query building and visualisation with either [Superset](https://superset.apache.org/) or [Metabase](https://www.metabase.com/).
+This is a minimal setup to run Trino as a query engine with the option for query building and visualisation with either https://superset.apache.org/[Superset] or https://www.metabase.com/[Metabase].
 It includes installation of Trino support for Supersert and Metabase, neither of which ship with support for it by default.
+It also includes https://github.com/okbob/pspg[`pspg`] for the Trino CLI. 
 
 :warning: This is 💯 intended for local sandbox experimentation. Do not even think about using it as the basis for production deployment :)**
 
@@ -42,7 +43,7 @@ docker exec -it trino trino
 
 This gives you a `trino>` prompt, from which you can run Trino SQL.
 
-TIP: You can view the Trino UI for monitoring metrics at http://localhost:8080/ui/
+TIP: You can view the Trino UI for monitoring metrics at http://localhost:8080/ui/ (enter anything for the username)
 
 === Superset
 
