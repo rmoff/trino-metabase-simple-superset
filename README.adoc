@@ -19,6 +19,17 @@ image::overview.excalidraw.png[]
 A catalog definition is already provided for Apache Iceberg/TableFlow, and the https://trino.io/docs/current/connector/memory.html[in-memory connector].
 If you are using the https://www.confluent.io/blog/tableflow-is-now-generally-available/[Tableflow] connector make sure to update the `tableflow.properties` file with your TableFlow API key and secret.
 
+2. If you are using Tableflow with "Bring your own Storage" you'll need to set your AWS credentials in Trino.
++
+Set the following environment variables in the Docker Compose for Trino:
++
+* AWS_PROFILE
+* AWS_REGION
+* AWS_ACCESS_KEY_ID
+* AWS_SECRET_ACCESS_KEY
++
+This assumes that the AWS CLI is already configured.
+
 === Superset
 
 1. Update the `superset_config.py` file with any configuration changes that you need.
