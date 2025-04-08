@@ -5,7 +5,9 @@ _Credit to https://github.com/elijahfhopp[Elijah Hopp] on https://github.com/eli
 
 This is a minimal setup to run Trino as a query engine with the option for query building and visualisation with either https://superset.apache.org/[Superset] or https://www.metabase.com/[Metabase].
 It includes installation of Trino support for Supersert and Metabase, neither of which ship with support for it by default.
-It also includes https://github.com/okbob/pspg[`pspg`] for the Trino CLI. 
+It also includes https://github.com/okbob/pspg[`pspg`] for the Trino CLI.
+
+image::overview.excalidraw.png[]
 
 :warning: This is 💯 intended for local sandbox experimentation. Do not even think about using it as the basis for production deployment :)**
 
@@ -14,8 +16,8 @@ It also includes https://github.com/okbob/pspg[`pspg`] for the Trino CLI.
 === Trino
 
 1. Add any catalogs that you want to in the `trino/catalog` directory.
-A catalog definition is already provided for Apache Iceberg/TableFlow, and the in-memory connector.
-If you are using the Tableflow connector make sure to update the `tableflow.properties` file with your TableFlow API key and secret.
+A catalog definition is already provided for Apache Iceberg/TableFlow, and the https://trino.io/docs/current/connector/memory.html[in-memory connector].
+If you are using the https://www.confluent.io/blog/tableflow-is-now-generally-available/[Tableflow] connector make sure to update the `tableflow.properties` file with your TableFlow API key and secret.
 
 === Superset
 
@@ -65,16 +67,16 @@ That's a lot of `trino`s! This is what they mean:
 
 ==== Exploring Superset
 
-Under the **SQL** menu at the top click on **SQL Lab**. 
+Under the **SQL** menu at the top click on **SQL Lab**.
 In the SQL query pane enter:
 
 [source,sql]
 ----
-SELECT 
+SELECT
     n AS id,
     'Item_' || CAST(n AS VARCHAR) AS name,
     ROUND(RAND() * 1000, 2) AS value,
-    CASE MOD(n, 5) 
+    CASE MOD(n, 5)
         WHEN 0 THEN 'Category A'
         WHEN 1 THEN 'Category B'
         WHEN 2 THEN 'Category C'
@@ -98,7 +100,7 @@ Tail the container log:
 docker compose logs -f metabase-run-setup
 ----
 
-Once it's ready you'll see: 
+Once it's ready you'll see:
 
 [source,bash]
 ----
@@ -115,7 +117,7 @@ Login to Metabase at http://localhost:3000 as `admin@example.com` / `ArthurDent4
 
 Click on **Add database** on the left panel.
 
-Create a connection: 
+Create a connection:
 
 * Database type: `Starburst`
 * Display name: _Whatever you want_
