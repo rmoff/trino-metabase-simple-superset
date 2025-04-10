@@ -14,6 +14,7 @@ services:
     #   - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-$(aws configure get aws_secret_access_key)}
     volumes:
       - $PWD/trino/catalog:/etc/trino/catalog
+      - $PWD/trino/log.properties:/etc/trino/log.properties
 
   superset:
     init: true
